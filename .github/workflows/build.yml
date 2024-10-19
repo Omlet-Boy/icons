@@ -1,0 +1,42 @@
+name: Resize PNG Images
+
+on:
+    push:
+        paths:
+            - .github/**
+            - original-images/**
+            - resize-images.sh
+    pull_request:
+        paths:
+            - .github/**
+            - original-images/**
+            - resize-images.sh
+
+permissions:
+    contents: write
+
+jobs:
+    resize_images:
+        name: Resize PNG Images
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Install ImageMagick
+              run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+            - name: Make script executable
+              run: chmod +x resize-images.sh
+
+            - name: Run image resizing script
+              run: ./resize-images.sh
+
+            - name: Publish resized images
+              uses: s0/git-publish-subdir-action@develop
+              env:
+                  REPO: self
+                  BRANCH: dist
+                  FOLDER: "svgs"
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
