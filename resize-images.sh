@@ -3,7 +3,7 @@
 # Define input and output directories
 inputDir="./original-images"
 outputDir="./svgs"
-size="100"
+size="40"
 quality="100"
 
 # Create output directory if it doesn't exist
