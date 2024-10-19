@@ -5,11 +5,13 @@ on:
         paths:
             - .github/**
             - original-images/**
+            - svgs/**
             - resize-images.sh
     pull_request:
         paths:
             - .github/**
             - original-images/**
+            - svgs/**
             - resize-images.sh
 
 permissions:
