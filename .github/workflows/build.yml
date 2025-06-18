@@ -1,4 +1,4 @@
-name: Resize PNG Images
+name: Process Icons
 
 on:
     push:
@@ -19,8 +19,8 @@ permissions:
     contents: write
 
 jobs:
-    resize_images:
-        name: Resize PNG Images
+    process_icons:
+        name: Process Icons
         runs-on: ubuntu-latest
 
         steps:
@@ -29,8 +29,8 @@ jobs:
               with:
                 fetch-depth: 0  # Allows git diff to work properly
 
-            - name: Install ImageMagick
-              run: sudo apt-get update && sudo apt-get install -y imagemagick
+            - name: Setup ImageMagick
+            - uses: mfinelli/setup-imagemagick@v6
 
             - name: Make script executable
               run: chmod +x resize-images.sh

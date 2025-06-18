@@ -54,7 +54,7 @@ for image in "$imagesDir"/*.png; do
             resizeArg="x40"
         fi
 
-        convert "$image" -resize "$resizeArg" -quality "$quality" "$outputPath"
+        magick mogrify "$image" -resize "$resizeArg" -quality "$quality" "$outputPath"
         echo "Resized $filename"
         changes_made=true
     fi
