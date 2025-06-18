@@ -69,7 +69,7 @@ for svg in "$svgsDir"/*.svg; do
 
     if [[ ! -f "$outputPath" ]] || echo "$changed_files" | grep -q "^$rel_path$"; then
         cp "$svg" "$outputPath"
-        echo "Copied SVG: $filename"
+        echo "Copied $filename"
         changes_made=true
     fi
 done
