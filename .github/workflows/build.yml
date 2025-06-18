@@ -5,14 +5,14 @@ on:
         paths:
             - .github/**
             - original-images/**
-            - svgs/**
-            - resize-images.sh
+            - original-svgs/**
+            - process-icons.sh
     pull_request:
         paths:
             - .github/**
             - original-images/**
-            - svgs/**
-            - resize-images.sh
+            - original-svgs/**
+            - process-icons.sh
     workflow_dispatch:
 
 permissions:
@@ -33,7 +33,7 @@ jobs:
               uses: mfinelli/setup-imagemagick@v6
 
             - name: Make script executable
-              run: chmod +x resize-images.sh
+              run: chmod +x process-icons.sh
 
             - name: Run image resizing script
-              run: ./resize-images.sh
+              run: ./process-icons.sh
