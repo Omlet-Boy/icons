@@ -36,54 +36,48 @@ for icon in "$outputDir"/*; do
     fi
 done
 
-# --- STEP 3: Resize changed PNGs only ---
+# --- STEP 3: Resize PNGs if output doesn't exist OR source was changed ---
 
 for image in "$imagesDir"/*.png; do
-    rel_path="${image#./}"  # strip leading ./ if present
-    if ! echo "$changed_files" | grep -q "^$rel_path$"; then
-        continue  # skip if not in git diff
-    fi
-
+    rel_path="${image#./}"
     filename=$(basename "$image")
     outputPath="$outputDir/$filename"
 
-    dimensions=$(identify -format "%w %h" "$image")
-    width=$(echo "$dimensions" | cut -d' ' -f1)
-    height=$(echo "$dimensions" | cut -d' ' -f2)
+    if [[ ! -f "$outputPath" ]] || echo "$changed_files" | grep -q "^$rel_path$"; then
+        dimensions=$(identify -format "%w %h" "$image")
+        width=$(echo "$dimensions" | cut -d' ' -f1)
+        height=$(echo "$dimensions" | cut -d' ' -f2)
 
-    if [ "$width" -lt "$height" ]; then
-        resizeArg="40x"
-    else
-        resizeArg="x40"
+        if [ "$width" -lt "$height" ]; then
+            resizeArg="40x"
+        else
+            resizeArg="x40"
+        fi
+
+        convert "$image" -resize "$resizeArg" -quality "$quality" "$outputPath"
+        echo "Resized $filename"
+        changes_made=true
     fi
-
-    convert "$image" -resize "$resizeArg" -quality "$quality" "$outputPath"
-    echo "Resized $filename"
-    changes_made=true
 done
 
-# --- STEP 4: Copy changed SVGs only ---
+# --- STEP 4: Copy SVGs if output doesn't exist OR source was changed ---
 
 for svg in "$svgsDir"/*.svg; do
     rel_path="${svg#./}"
-    if ! echo "$changed_files" | grep -q "^$rel_path$"; then
-        continue  # skip if not in git diff
-    fi
-
     filename=$(basename "$svg")
     outputPath="$outputDir/$filename"
 
-    cp "$svg" "$outputPath"
-    echo "Copied SVG: $filename"
-    changes_made=true
+    if [[ ! -f "$outputPath" ]] || echo "$changed_files" | grep -q "^$rel_path$"; then
+        cp "$svg" "$outputPath"
+        echo "Copied SVG: $filename"
+        changes_made=true
+    fi
 done
 
 # --- STEP 5: Commit and push if changes made ---
 
-# Stage icon changes only
 git add ./icons
 
-# Check if there's anything staged (icon changes only)
 if git diff --cached --quiet; then
     echo "No changes in ./icons to commit."
 else
