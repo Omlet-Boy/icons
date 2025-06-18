@@ -18,15 +18,28 @@ echo "$changed_files" | grep "^original-images/.*\.png$" | while read -r image; 
     filename=$(basename "$image")
     outputPath="$outputDir/$filename"
 
-    convert "$image" -resize "${size}x" -quality "$quality" "$outputPath"
-    echo "Resized $image..."
+    # Get image dimensions
+    dimensions=$(identify -format "%w %h" "$image")
+    width=$(echo "$dimensions" | cut -d' ' -f1)
+    height=$(echo "$dimensions" | cut -d' ' -f2)
+
+    # Determine which side is smaller and scale accordingly
+    if [ "$width" -lt "$height" ]; then
+        resizeArg="40x" # Make width 40px
+    else
+        resizeArg="x40" # Make height 40px
+    fi
+
+    # Resize while maintaining aspect ratio and preventing smaller side < 40px
+    convert "$image" -resize "$resizeArg" -quality "$quality" "$outputPath"
+    echo "Resized $image"
 done
 
 # Copy changed SVGs
 echo "$changed_files" | grep "^svgs/.*\.svg$" | while read -r svg; do
     filename=$(basename "$svg")
     cp "$svg" "$outputDir/$filename"
-    echo "Copied SVG: $filename"
+    echo "Copied $filename"
 done
 
-echo "Selective image processing completed!"
+echo "Icon processing completed!"
