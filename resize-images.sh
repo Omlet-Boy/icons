@@ -10,10 +10,13 @@ quality="90"
 
 mkdir -p "$outputDir"
 
-# Track whether anything changed
+# Track changes
 changes_made=false
 
-# --- STEP 1: Delete icons not found in original-images/ or svgs/ ---
+# --- STEP 1: Get list of changed files ---
+changed_files=$(git diff --name-only HEAD~1 HEAD)
+
+# --- STEP 2: Delete icons not found in original-images/ or svgs/ ---
 
 valid_sources=()
 while IFS= read -r f; do
@@ -33,26 +36,25 @@ for icon in "$outputDir"/*; do
     fi
 done
 
-# --- STEP 2: Resize PNGs if missing or changed ---
+# --- STEP 3: Resize changed PNGs only ---
 
 for image in "$imagesDir"/*.png; do
+    rel_path="${image#./}"  # strip leading ./ if present
+    if ! echo "$changed_files" | grep -q "^$rel_path$"; then
+        continue  # skip if not in git diff
+    fi
+
     filename=$(basename "$image")
     outputPath="$outputDir/$filename"
-
-    if [[ -f "$outputPath" ]]; then
-        if cmp -s "$image" "$outputPath"; then
-            continue  # No change
-        fi
-    fi
 
     dimensions=$(identify -format "%w %h" "$image")
     width=$(echo "$dimensions" | cut -d' ' -f1)
     height=$(echo "$dimensions" | cut -d' ' -f2)
 
     if [ "$width" -lt "$height" ]; then
-        resizeArg="40x"  # Ensure min width
+        resizeArg="40x"
     else
-        resizeArg="x40"  # Ensure min height
+        resizeArg="x40"
     fi
 
     convert "$image" -resize "$resizeArg" -quality "$quality" "$outputPath"
@@ -60,24 +62,23 @@ for image in "$imagesDir"/*.png; do
     changes_made=true
 done
 
-# --- STEP 3: Copy SVGs if missing or changed ---
+# --- STEP 4: Copy changed SVGs only ---
 
 for svg in "$svgsDir"/*.svg; do
+    rel_path="${svg#./}"
+    if ! echo "$changed_files" | grep -q "^$rel_path$"; then
+        continue  # skip if not in git diff
+    fi
+
     filename=$(basename "$svg")
     outputPath="$outputDir/$filename"
-
-    if [[ -f "$outputPath" ]]; then
-        if cmp -s "$svg" "$outputPath"; then
-            continue  # No change
-        fi
-    fi
 
     cp "$svg" "$outputPath"
     echo "Copied SVG: $filename"
     changes_made=true
 done
 
-# --- STEP 4: Git commit and push if changes made ---
+# --- STEP 5: Commit and push if changes made ---
 
 if [[ "$changes_made" = true ]] || [[ $(git status --porcelain ./icons) ]]; then
     echo "Changes detected in ./icons — committing..."
