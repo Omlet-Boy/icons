@@ -40,7 +40,7 @@ for image in "$images_dir"/*.png; do
     output_path="$output_dir/$filename"
 
     if [[ ! -f "$output_path" ]] || echo "$changed_files" | grep -q "^$rel_path$"; then
-        dimensions=$(identify -format "%w %h" "$image")
+        dimensions=$(magick identify -format "%w %h" "$image")
         width=$(echo "$dimensions" | cut -d' ' -f1)
         height=$(echo "$dimensions" | cut -d' ' -f2)
 
@@ -50,7 +50,7 @@ for image in "$images_dir"/*.png; do
             resize_arg="x${min_size}"
         fi
 
-        magick convert "$image" -resize "$resize_arg" -quality "$quality" "$output_path"
+        magick "$image" -resize "$resize_arg" -quality "$quality" "$output_path"
         echo "Resized $filename"
     fi
 done
