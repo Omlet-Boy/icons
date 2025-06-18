@@ -10,38 +10,39 @@ quality="90"
 
 mkdir -p "$outputDir"
 
-# Gather all valid source image base filenames
-all_sources=()
+# Track whether anything changed
+changes_made=false
+
+# --- STEP 1: Delete icons not found in original-images/ or svgs/ ---
+
+valid_sources=()
 while IFS= read -r f; do
-    all_sources+=("$(basename "$f")")
+    valid_sources+=("$(basename "$f")")
 done < <(find "$imagesDir" -type f -name '*.png')
+
 while IFS= read -r f; do
-    all_sources+=("$(basename "$f")")
+    valid_sources+=("$(basename "$f")")
 done < <(find "$svgsDir" -type f -name '*.svg')
 
-# Delete icons that are no longer present in original-images or svgs
 for icon in "$outputDir"/*; do
     icon_name=$(basename "$icon")
-    if [[ ! " ${all_sources[*]} " =~ " ${icon_name} " ]]; then
+    if [[ ! " ${valid_sources[*]} " =~ " ${icon_name} " ]]; then
         echo "Deleting stale icon: $icon_name"
         rm -f "$icon"
+        changes_made=true
     fi
 done
 
-# Get list of changed files
-changed_files=$(git diff --name-only HEAD~1 HEAD)
+# --- STEP 2: Resize PNGs if missing or changed ---
 
-# Track if anything changed
-changes_made=false
-
-# Process new or changed PNGs
-echo "$changed_files" | grep "^original-images/.*\.png$" | while read -r image; do
+for image in "$imagesDir"/*.png; do
     filename=$(basename "$image")
     outputPath="$outputDir/$filename"
 
     if [[ -f "$outputPath" ]]; then
-        echo "Skipping existing resized image: $filename"
-        continue
+        if cmp -s "$image" "$outputPath"; then
+            continue  # No change
+        fi
     fi
 
     dimensions=$(identify -format "%w %h" "$image")
@@ -49,9 +50,9 @@ echo "$changed_files" | grep "^original-images/.*\.png$" | while read -r image; 
     height=$(echo "$dimensions" | cut -d' ' -f2)
 
     if [ "$width" -lt "$height" ]; then
-        resizeArg="40x"
+        resizeArg="40x"  # Ensure min width
     else
-        resizeArg="x40"
+        resizeArg="x40"  # Ensure min height
     fi
 
     convert "$image" -resize "$resizeArg" -quality "$quality" "$outputPath"
@@ -59,25 +60,26 @@ echo "$changed_files" | grep "^original-images/.*\.png$" | while read -r image; 
     changes_made=true
 done
 
-# Copy changed SVGs
-echo "$changed_files" | grep "^svgs/.*\.svg$" | while read -r svg; do
-    filename=$(basename "$svg")
-    dest="$outputDir/$filename"
+# --- STEP 3: Copy SVGs if missing or changed ---
 
-    if [[ -f "$dest" ]]; then
-        echo "Skipping existing SVG: $filename"
-        continue
+for svg in "$svgsDir"/*.svg; do
+    filename=$(basename "$svg")
+    outputPath="$outputDir/$filename"
+
+    if [[ -f "$outputPath" ]]; then
+        if cmp -s "$svg" "$outputPath"; then
+            continue  # No change
+        fi
     fi
 
-    cp "$svg" "$dest"
+    cp "$svg" "$outputPath"
     echo "Copied SVG: $filename"
     changes_made=true
 done
 
-echo "Icon processing completed!"
+# --- STEP 4: Git commit and push if changes made ---
 
-# Check for actual changes in icons and commit if any
-if [[ $(git status --porcelain ./icons) ]]; then
+if [[ "$changes_made" = true ]] || [[ $(git status --porcelain ./icons) ]]; then
     echo "Changes detected in ./icons — committing..."
     git config --global user.name 'github-actions[bot]'
     git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -87,3 +89,5 @@ if [[ $(git status --porcelain ./icons) ]]; then
 else
     echo "No changes to commit."
 fi
+
+echo "Icon processing completed!"
