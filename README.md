@@ -1,7 +1,5 @@
 # icons
 
-Default color
+Use [Image to SVG converter](https://www.freeconvert.com/svg-converter) when making custom icons.
 
-```
-56759c
-```
+SVG fill color should be `#a0a0a0`
