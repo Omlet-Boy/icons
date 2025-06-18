@@ -26,6 +26,8 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v3
+              with:
+                fetch-depth: 0  # Allows git diff to work properly
 
             - name: Install ImageMagick
               run: sudo apt-get update && sudo apt-get install -y imagemagick

@@ -10,20 +10,23 @@ quality="90"
 # Create output directory if it doesn't exist
 mkdir -p "$outputDir"
 
-# Loop through each .png file in the input directory
-for image in "$imagesDir"/*.png; do
-    # Get the filename from the image path
+# Get list of changed .png and .svg files
+changed_files=$(git diff --name-only HEAD~1 HEAD)
+
+# Process changed PNGs
+echo "$changed_files" | grep "^original-images/.*\.png$" | while read -r image; do
     filename=$(basename "$image")
     outputPath="$outputDir/$filename"
-    
-    # Use magick command to resize the image to 32px width and maintain aspect ratio
+
     convert "$image" -resize "${size}x" -quality "$quality" "$outputPath"
-    
-    echo "Resized $filename"
+    echo "Resized $image..."
 done
 
-# Copy svgs to icons folder
-cp -r "$svgsDir"/* "$outputDir"/
-echo "Copied SVGs to icons folder"
+# Copy changed SVGs
+echo "$changed_files" | grep "^svgs/.*\.svg$" | while read -r svg; do
+    filename=$(basename "$svg")
+    cp "$svg" "$outputDir/$filename"
+    echo "Copied SVG: $filename"
+done
 
-echo "Image resizing completed!"
+echo "Selective image processing completed!"
