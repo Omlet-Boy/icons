@@ -80,15 +80,18 @@ done
 
 # --- STEP 5: Commit and push if changes made ---
 
-if [[ "$changes_made" = true ]] || [[ $(git status --porcelain ./icons) ]]; then
+# Stage icon changes only
+git add ./icons
+
+# Check if there's anything staged (icon changes only)
+if git diff --cached --quiet; then
+    echo "No changes in ./icons to commit."
+else
     echo "Changes detected in ./icons — committing..."
     git config --global user.name 'github-actions[bot]'
     git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-    git add ./icons
     git commit -m 'Update icons'
     git push
-else
-    echo "No changes to commit."
 fi
 
 echo "Icon processing completed!"
