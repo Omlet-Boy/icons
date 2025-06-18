@@ -30,7 +30,7 @@ jobs:
                 fetch-depth: 0  # Allows git diff to work properly
 
             - name: Setup ImageMagick
-            - uses: mfinelli/setup-imagemagick@v6
+              uses: mfinelli/setup-imagemagick@v6
 
             - name: Make script executable
               run: chmod +x resize-images.sh
