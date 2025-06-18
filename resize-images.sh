@@ -1,16 +1,17 @@
 #!/bin/bash
 
 # Define input and output directories
-inputDir="./original-images"
-outputDir="./svgs"
+imagesDir="./original-images"
+svgsDir="./svgs"
+outputDir="./icons"
 size="40"
-quality="100"
+quality="90"
 
 # Create output directory if it doesn't exist
 mkdir -p "$outputDir"
 
 # Loop through each .png file in the input directory
-for image in "$inputDir"/*.png; do
+for image in "$imagesDir"/*.png; do
     # Get the filename from the image path
     filename=$(basename "$image")
     outputPath="$outputDir/$filename"
@@ -20,5 +21,9 @@ for image in "$inputDir"/*.png; do
     
     echo "Resized $filename"
 done
+
+# Copy svgs to icons folder
+cp -r "$svgsDir"/* "$outputDir"/
+echo "Copied SVGs to icons folder"
 
 echo "Image resizing completed!"
